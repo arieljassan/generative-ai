@@ -67,13 +67,22 @@ def extract_from_document(extract_config_id: str, document_uri: str) -> str:
         fields=json.dumps(extract_config["fields"], indent=4),
     )
 
+    if document_uri.startswith("gs://"):
+        doc_part = types.Part.from_uri(
+            file_uri=document_uri,
+            mime_type=extract_config["document_mime_type"],
+        )
+    else:
+        bytes_data, mime_type = document_sanitizer.get_bytes_from_file(document_uri)
+        doc_part = types.Part.from_bytes(
+            data=bytes_data,
+            mime_type=mime_type,
+        )
+
     response = client.models.generate_content(
         model=extract_config["model"],
         contents=[
-            types.Part.from_uri(
-                file_uri=document_uri,
-                mime_type=extract_config["document_mime_type"],
-            ),
+            doc_part,
             prompt,
         ],
         config={
@@ -90,13 +99,22 @@ def classify_document(document_uri: str) -> str:
         classes=json.dumps(classification_config["classes"], indent=4),
     )
 
+    if document_uri.startswith("gs://"):
+        doc_part = types.Part.from_uri(
+            file_uri=document_uri,
+            mime_type=classification_config["document_mime_type"],
+        )
+    else:
+        bytes_data, mime_type = document_sanitizer.get_bytes_from_file(document_uri)
+        doc_part = types.Part.from_bytes(
+            data=bytes_data,
+            mime_type=mime_type,
+        )
+
     response = client.models.generate_content(
         model=classification_config["model"],
         contents=[
-            types.Part.from_uri(
-                file_uri=document_uri,
-                mime_type=classification_config["document_mime_type"],
-            ),
+            doc_part,
             prompt,
         ],
         config={

@@ -47,7 +47,7 @@ CLASSIFY_PROMPT_TEMPLATE = """\
 """
 
 # Load environment variables.
-dotenv.load_dotenv()
+dotenv.load_dotenv(override=True)
 project_id = os.environ.get("GEMINI_PROJECT_ID")
 if not project_id:
     raise ValueError("GEMINI_PROJECT_ID environment variable must be set.")
@@ -67,10 +67,20 @@ def extract_from_document(extract_config_id: str, document_uri: str) -> str:
         fields=json.dumps(extract_config["fields"], indent=4),
     )
 
+    lower_uri = document_uri.lower()
+    if lower_uri.endswith(".pdf"):
+        mime_type = "application/pdf"
+    elif lower_uri.endswith(".png"):
+        mime_type = "image/png"
+    elif lower_uri.endswith((".jpg", ".jpeg")):
+        mime_type = "image/jpeg"
+    else:
+        mime_type = extract_config.get("document_mime_type", "application/pdf")
+
     if document_uri.startswith("gs://"):
         doc_part = types.Part.from_uri(
             file_uri=document_uri,
-            mime_type=extract_config["document_mime_type"],
+            mime_type=mime_type,
         )
     else:
         bytes_data, mime_type = document_sanitizer.get_bytes_from_file(document_uri)
@@ -99,10 +109,21 @@ def classify_document(document_uri: str) -> str:
         classes=json.dumps(classification_config["classes"], indent=4),
     )
 
+    # Determine mime_type dynamically based on document extension
+    lower_uri = document_uri.lower()
+    if lower_uri.endswith(".pdf"):
+        mime_type = "application/pdf"
+    elif lower_uri.endswith(".png"):
+        mime_type = "image/png"
+    elif lower_uri.endswith((".jpg", ".jpeg")):
+        mime_type = "image/jpeg"
+    else:
+        mime_type = classification_config.get("document_mime_type", "application/pdf")
+
     if document_uri.startswith("gs://"):
         doc_part = types.Part.from_uri(
             file_uri=document_uri,
-            mime_type=classification_config["document_mime_type"],
+            mime_type=mime_type,
         )
     else:
         bytes_data, mime_type = document_sanitizer.get_bytes_from_file(document_uri)

@@ -234,7 +234,7 @@
     },
 
     "classification_config": {
-        "document_mime_type": "image/png",
+        "document_mime_type": "application/pdf",
         "model": "gemini-2.5-flash",
         "classes": {
             "handwritten": "Document entirely handwritten. Process this before other classes", 

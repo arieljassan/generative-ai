@@ -46,7 +46,7 @@ EXTRACT_LOW_QUALITY_PROMPT_TEMPLATE = """
 """
 
 # Load environment variables.
-dotenv.load_dotenv()
+dotenv.load_dotenv(override=True)
 project_id = os.environ.get("GEMINI_PROJECT_ID")
 if not project_id:
     raise ValueError("GEMINI_PROJECT_ID environment variable must be set.")

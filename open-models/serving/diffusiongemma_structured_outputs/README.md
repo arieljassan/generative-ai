@@ -10,7 +10,7 @@ This project implements **Single-Step Structured Diffusion Reads (System One)** 
 
 | Layer | Configuration | Details |
 | :--- | :--- | :--- |
-| **Compute & Accelerator** | `g2-standard-8` (`1x NVIDIA_L4`) | `8 vCPUs`, `32 GiB` host RAM, and `1x NVIDIA L4` GPU (`24 GiB` GDDR6 VRAM). |
+| **Compute & Accelerator** | `g2-standard-8` (`1x NVIDIA_L4`) | `8 vCPUs`, `32 GiB` host RAM, and `1x NVIDIA L4` GPU (`24 GiB` VRAM). |
 | **Model & Quantization** | `nvidia/diffusiongemma-26B-A4B-it-NVFP4` | Mixture-of-Experts (`26B` total parameters, `4B` active per token) quantized to `NVFP4` (`~20.54 GiB` VRAM footprint on the L4). |
 | **Serving Container** | `vllm/vllm-openai:v0.31.0` | Official upstream vLLM release image mirrored in Artifact Registry (`--diffusion-config={"canvas_length": 64}`, `--max-logprobs=32`, `--max-num-seqs=16`, `--gpu-memory-utilization=0.92`). |
 | **Endpoint Topology** | Dedicated Endpoint (`use_dedicated_endpoint=True`) | Direct HTTP/2 `rawPredict` routing without intermediate shared proxy overhead, supporting concurrent request batching on the GPU. |

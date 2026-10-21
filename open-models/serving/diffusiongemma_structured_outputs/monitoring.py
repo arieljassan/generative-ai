@@ -36,7 +36,7 @@ ENDPOINT_UTILIZATION_METRICS: dict[str, tuple[str, ...]] = {
     "gpu_power_w": (
         "prometheus.googleapis.com/vertex_dcgm_fi_dev_power_usage/gauge",
     ),
-    "gpu_vram_gib": (
+    "gpu_memory_gib": (
         "prometheus.googleapis.com/vertex_dcgm_fi_dev_fb_used/gauge",
         "aiplatform.googleapis.com/prediction/online/"
         "accelerator/memory/bytes_used",
@@ -57,8 +57,8 @@ def _normalize_monitoring_point_value(
 ) -> float:
     """Converts raw Cloud Monitoring values into percentages, Watts, or GiB."""
     if key.endswith("_gib"):
-        # DCGM fb_used is reported in MiB (~21032), whereas Online Prediction
-        # memory metrics are reported in Bytes.
+        # Prometheus fb_used is reported in MiB (~21032), whereas Online
+        # Prediction memory metrics are reported in Bytes.
         if raw_val > 1024.0**2:
             return round(raw_val / (1024.0**3), 3)
         return round(raw_val / 1024.0, 3)
@@ -98,13 +98,13 @@ def fetch_endpoint_utilization_metrics(
     mon_client = client or monitoring_v3.MetricServiceClient()
     # Look back 10 minutes when querying live Cloud Monitoring so steady metrics
     # (like RAM/VRAM) with a 360s ingest_delay have a recent sample available.
-    lookback = (
+    look_back = (
         timedelta(minutes=2) if client is not None else timedelta(minutes=10)
     )
     window_start = start_time - timedelta(minutes=2)
     window_end = end_time + timedelta(minutes=2)
     interval = monitoring_v3.TimeInterval(
-        start_time=start_time - lookback,
+        start_time=start_time - look_back,
         end_time=window_end,
     )
     by_timestamp: dict[str, dict[str, Any]] = {}
@@ -117,12 +117,12 @@ def fetch_endpoint_utilization_metrics(
         if isinstance(metric_types, str):
             metric_types = (metric_types,)
         for metric_type in metric_types:
-            flt = _build_monitoring_filter(endpoint_id, metric_type)
+            metric_filter = _build_monitoring_filter(endpoint_id, metric_type)
             try:
                 series_iter = mon_client.list_time_series(
                     request={
                         "name": f"projects/{project}",
-                        "filter": flt,
+                        "filter": metric_filter,
                         "interval": interval,
                         "view": (
                             monitoring_v3.ListTimeSeriesRequest.TimeSeriesView.FULL
@@ -274,7 +274,7 @@ def attach_utilization_to_sweep(
             "gpu_tensor_active_pct",
             "gpu_power_w",
             "cpu_utilization_pct",
-            "gpu_vram_gib",
+            "gpu_memory_gib",
             "ram_used_gib",
         ):
             vals = [float(u[key]) for u in interior if key in u]
@@ -293,7 +293,7 @@ def attach_utilization_to_sweep(
             if vals:
                 s_row[key] = round(statistics.mean(vals), 2)
             elif (
-                key in ("gpu_vram_gib", "ram_used_gib")
+                key in ("gpu_memory_gib", "ram_used_gib")
                 and key in recent_fallbacks
             ):
                 s_row[key] = round(float(recent_fallbacks[key]), 2)

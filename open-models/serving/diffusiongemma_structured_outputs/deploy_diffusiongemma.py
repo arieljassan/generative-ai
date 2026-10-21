@@ -224,7 +224,7 @@ def deploy_model_to_endpoint(
 
 
 def delete_endpoint_and_model(name: str = config.ENDPOINT_ID) -> None:
-    """Undeploys all models and deletes the endpoint and model via the SDK."""
+    """Undeploy all models and delete the endpoint and model via the SDK."""
     endpoint = find_endpoint_by_name(name)
     if endpoint:
         print(

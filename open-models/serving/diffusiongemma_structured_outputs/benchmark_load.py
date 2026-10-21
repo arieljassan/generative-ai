@@ -200,22 +200,22 @@ def _extract_token_metrics(
     wall_sec: float,
 ) -> dict[str, int | float]:
     """Aggregates prompt, output, and total token counts from vLLM responses."""
-    prompt_toks: list[int] = []
-    output_toks: list[int] = []
+    prompt_tokens: list[int] = []
+    output_tokens: list[int] = []
     for resp in responses:
         if not isinstance(resp, dict):
             continue
         usage = resp.get("usage")
         if isinstance(usage, dict) and "prompt_tokens" in usage:
-            prompt_toks.append(int(usage.get("prompt_tokens", 0)))
-            output_toks.append(
+            prompt_tokens.append(int(usage.get("prompt_tokens", 0)))
+            output_tokens.append(
                 int(usage.get("completion_tokens", fallback_output_tokens))
             )
         else:
-            prompt_toks.append(fallback_prompt_tokens)
-            output_toks.append(fallback_output_tokens)
+            prompt_tokens.append(fallback_prompt_tokens)
+            output_tokens.append(fallback_output_tokens)
 
-    if not prompt_toks:
+    if not prompt_tokens:
         return {
             "prompt_tokens_mean": 0.0,
             "output_tokens_mean": 0.0,
@@ -223,12 +223,12 @@ def _extract_token_metrics(
             "tokens_per_s": 0.0,
         }
 
-    total_toks = int(sum(prompt_toks) + sum(output_toks))
+    total_tokens = int(sum(prompt_tokens) + sum(output_tokens))
     return {
-        "prompt_tokens_mean": round(statistics.mean(prompt_toks), 1),
-        "output_tokens_mean": round(statistics.mean(output_toks), 1),
-        "total_tokens": total_toks,
-        "tokens_per_s": round(total_toks / max(1e-6, wall_sec), 1),
+        "prompt_tokens_mean": round(statistics.mean(prompt_tokens), 1),
+        "output_tokens_mean": round(statistics.mean(output_tokens), 1),
+        "total_tokens": total_tokens,
+        "tokens_per_s": round(total_tokens / max(1e-6, wall_sec), 1),
     }
 
 

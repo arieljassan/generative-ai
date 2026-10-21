@@ -45,14 +45,14 @@ class TestMonitoring(unittest.TestCase):
         fake_client = mock.MagicMock()
 
         def _side_effect(request: dict[str, object]) -> list[mock.MagicMock]:
-            flt = str(request["filter"])
-            if "accelerator/duty_cycle" in flt:
+            metric_filter = str(request["filter"])
+            if "accelerator/duty_cycle" in metric_filter:
                 return [_make_ts("%", 94.5)]
-            if "accelerator/memory/bytes_used" in flt:
+            if "accelerator/memory/bytes_used" in metric_filter:
                 return [_make_ts("By", 18.5 * (1024.0**3))]
-            if "cpu/utilization" in flt:
+            if "cpu/utilization" in metric_filter:
                 return [_make_ts("1", 0.35)]
-            if "online/memory/bytes_used" in flt:
+            if "online/memory/bytes_used" in metric_filter:
                 return [_make_ts("By", 6.0 * (1024.0**3))]
             return []
 
@@ -66,7 +66,7 @@ class TestMonitoring(unittest.TestCase):
         )
         self.assertEqual(summary["gpu_duty_cycle_pct_max"], 94.5)
         self.assertEqual(summary["cpu_utilization_pct_mean"], 35.0)
-        self.assertEqual(summary["gpu_vram_gib_max"], 18.5)
+        self.assertEqual(summary["gpu_memory_gib_max"], 18.5)
         self.assertEqual(len(rows), 1)
 
         sweep_rows = [
@@ -80,8 +80,8 @@ class TestMonitoring(unittest.TestCase):
         self.assertEqual(sweep_rows[0]["gpu_duty_cycle_pct"], 94.5)
         self.assertEqual(sweep_rows[0]["cpu_utilization_pct"], 35.0)
 
-    def test_dcgm_prometheus_gpu_metrics_alignment(self) -> None:
-        # Verify prometheus_target DCGM metrics align :57 scrapes to :00 buckets.
+    def test_prometheus_gpu_metrics_alignment(self) -> None:
+        # Verify prometheus_target GPU metrics align :57 scrapes to :00 buckets.
         t0 = datetime(2026, 10, 20, 5, 53, 50, tzinfo=timezone.utc)
         t1 = datetime(2026, 10, 20, 5, 56, 9, tzinfo=timezone.utc)
 
@@ -95,13 +95,16 @@ class TestMonitoring(unittest.TestCase):
         fake_client = mock.MagicMock()
 
         def _side_effect(request: dict[str, object]) -> list[mock.MagicMock]:
-            flt = str(request["filter"])
+            metric_filter = str(request["filter"])
             ts = mock.MagicMock()
             ts.unit = ""
-            if "vertex_dcgm_fi_dev_gpu_util/gauge" in flt:
-                self.assertIn('resource.type = "prometheus_target"', flt)
+            if "vertex_dcgm_fi_dev_gpu_util/gauge" in metric_filter:
                 self.assertIn(
-                    'metric.labels.endpoint_id = "diffusiongemma-vllm"', flt
+                    'resource.type = "prometheus_target"', metric_filter
+                )
+                self.assertIn(
+                    'metric.labels.endpoint_id = "diffusiongemma-vllm"',
+                    metric_filter,
                 )
                 ts.points = [
                     _make_pt(
@@ -114,7 +117,7 @@ class TestMonitoring(unittest.TestCase):
                     ),
                 ]
                 return [ts]
-            if "vertex_dcgm_fi_dev_fb_used/gauge" in flt:
+            if "vertex_dcgm_fi_dev_fb_used/gauge" in metric_filter:
                 ts.points = [
                     _make_pt(
                         datetime(2026, 10, 20, 5, 54, 57, tzinfo=timezone.utc),
@@ -122,7 +125,7 @@ class TestMonitoring(unittest.TestCase):
                     )
                 ]
                 return [ts]
-            if "vertex_dcgm_fi_dev_power_usage/gauge" in flt:
+            if "vertex_dcgm_fi_dev_power_usage/gauge" in metric_filter:
                 ts.points = [
                     _make_pt(
                         datetime(2026, 10, 20, 5, 54, 57, tzinfo=timezone.utc),
@@ -141,7 +144,7 @@ class TestMonitoring(unittest.TestCase):
             client=fake_client,
         )
         self.assertEqual(summary["gpu_duty_cycle_pct_mean"], 89.5)
-        self.assertEqual(summary["gpu_vram_gib_max"], 20.0)
+        self.assertEqual(summary["gpu_memory_gib_max"], 20.0)
         self.assertEqual(summary["gpu_power_w_max"], 72.0)
 
         sweep_rows = [
@@ -153,7 +156,7 @@ class TestMonitoring(unittest.TestCase):
         ]
         monitoring.attach_utilization_to_sweep(sweep_rows, rows)
         self.assertEqual(sweep_rows[0]["gpu_duty_cycle_pct"], 89.5)
-        self.assertEqual(sweep_rows[0]["gpu_vram_gib"], 20.0)
+        self.assertEqual(sweep_rows[0]["gpu_memory_gib"], 20.0)
         self.assertEqual(sweep_rows[0]["gpu_power_w"], 72.0)
 
 

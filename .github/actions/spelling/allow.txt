@@ -224,6 +224,7 @@ bnb
 bom
 bookable
 booktitle
+boolq
 bools
 boop
 Borregas
@@ -1833,6 +1834,7 @@ rlines
 rlog
 rmcp
 RMSE
+rmse
 rmsg
 rnd
 RNN

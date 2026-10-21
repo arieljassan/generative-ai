@@ -190,7 +190,7 @@ def _evaluate_choice_dataset(
     )
     y_true: list[str] = []
     y_pred: list[str] = []
-    confs: list[float] = []
+    confidences: list[float] = []
 
     for (_, truth), raw in zip(samples, raw_list):
         if raw is None:
@@ -199,7 +199,7 @@ def _evaluate_choice_dataset(
         ans = parsed["answers"][field_name]
         y_true.append(truth)
         y_pred.append(ans["choice"])
-        confs.append(ans["confidence"])
+        confidences.append(ans["confidence"])
 
     acc = (
         sum(1 for yt, yp in zip(y_true, y_pred) if yt == yp) / len(y_true)
@@ -211,7 +211,7 @@ def _evaluate_choice_dataset(
         f"{dataset_prefix}_accuracy": round(acc, 4),
         f"{dataset_prefix}_macro_f1": round(f1, 4),
         f"{dataset_prefix}_mean_confidence": (
-            round(statistics.mean(confs), 4) if confs else 0.0
+            round(statistics.mean(confidences), 4) if confidences else 0.0
         ),
         f"{dataset_prefix}_median_ms": (
             round(statistics.median(latencies), 2) if latencies else 0.0
